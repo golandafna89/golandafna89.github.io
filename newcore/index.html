@@ -1,0 +1,1290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ask Cori</title>
+<meta name="description" content="Live prototype of the NewCore Ask Cori flow: harden the access of my marketing agents, from empty prompt to resolved agent list.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent: #6E32E0;
+    --accent-strong: #5B24C4;
+    --accent-tint: #F4EDFE;
+    --accent-tint-border: #E4D4FB;
+    --ink: #17151C;
+    --ink-muted: #63606C;
+    --ink-faint: #9C99A3;
+    --border: #E7E4EC;
+    --border-soft: #F0EEF4;
+    --surface: #FFFFFF;
+    --surface-sunken: #FAF9FC;
+    --surface-raised: #FFFFFF;
+    --critical: #D93636;
+    --critical-tint: #FCEBEB;
+    --warning: #C97A15;
+    --warning-tint: #FBF0E0;
+    --success: #1E9E5A;
+    --focus-ring: #B79AF0;
+    --shadow-card: 0 1px 2px rgba(23,21,28,0.04), 0 1px 1px rgba(23,21,28,0.03);
+    --shadow-pop: 0 12px 32px rgba(23,21,28,0.12), 0 2px 8px rgba(23,21,28,0.06);
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --accent: #9B6FF0;
+      --accent-strong: #B08AF5;
+      --accent-tint: #241C38;
+      --accent-tint-border: #392A54;
+      --ink: #F1EFF5;
+      --ink-muted: #B4B0BE;
+      --ink-faint: #7C7887;
+      --border: #322E3C;
+      --border-soft: #26232C;
+      --surface: #1B1920;
+      --surface-sunken: #151318;
+      --surface-raised: #221F29;
+      --critical: #F3777A;
+      --critical-tint: #3A2023;
+      --warning: #E3A94E;
+      --warning-tint: #382B18;
+      --success: #57C688;
+      --focus-ring: #9B6FF0;
+      --shadow-card: 0 1px 2px rgba(0,0,0,0.3);
+      --shadow-pop: 0 16px 40px rgba(0,0,0,0.5);
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --accent: #9B6FF0;
+    --accent-strong: #B08AF5;
+    --accent-tint: #241C38;
+    --accent-tint-border: #392A54;
+    --ink: #F1EFF5;
+    --ink-muted: #B4B0BE;
+    --ink-faint: #7C7887;
+    --border: #322E3C;
+    --border-soft: #26232C;
+    --surface: #1B1920;
+    --surface-sunken: #151318;
+    --surface-raised: #221F29;
+    --critical: #F3777A;
+    --critical-tint: #3A2023;
+    --warning: #E3A94E;
+    --warning-tint: #382B18;
+    --success: #57C688;
+    --focus-ring: #9B6FF0;
+    --shadow-card: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-pop: 0 16px 40px rgba(0,0,0,0.5);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    margin: 0;
+    background: var(--surface-sunken);
+    color: var(--ink);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--accent-tint-border); }
+  a { color: inherit; }
+  button { font-family: inherit; }
+  :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: 6px; }
+
+  .app {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar {
+    width: 232px;
+    flex: 0 0 232px;
+    background: var(--surface-sunken);
+    border-right: 1px solid var(--border-soft);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 12px;
+    height: 100%;
+    overflow-y: auto;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 8px 20px;
+  }
+  .brand-mark { width: 24px; height: 24px; flex: 0 0 24px; color: var(--ink); }
+  .brand-name { font-size: 15px; letter-spacing: -0.01em; color: var(--ink); }
+  .brand-name .bn-light { font-weight: 500; }
+  .brand-name .bn-bold { font-weight: 800; }
+
+  .nav-group { margin-bottom: 4px; }
+  .nav-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    padding: 14px 10px 6px;
+    text-transform: uppercase;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    color: var(--ink-muted);
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.12s ease, color 0.12s ease;
+    text-decoration: none;
+  }
+  .nav-item svg { flex: 0 0 16px; opacity: 0.85; }
+  .nav-item:hover { background: var(--border-soft); color: var(--ink); }
+  .nav-item.is-active {
+    background: var(--accent-tint);
+    color: var(--accent);
+  }
+  .nav-item.is-active svg { opacity: 1; }
+  .nav-spacer { flex: 1; }
+  .sidebar-foot { border-top: 1px solid var(--border-soft); padding-top: 12px; margin-top: 8px; }
+  .user-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 8px; border-radius: 8px; cursor: pointer;
+  }
+  .user-row:hover { background: var(--border-soft); }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: #1E9E5A;
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; flex: 0 0 30px;
+  }
+  .user-meta { line-height: 1.25; }
+  .user-name { font-size: 13px; font-weight: 600; }
+  .user-env { font-size: 11.5px; color: var(--ink-faint); }
+
+  /* ---------- Main scaffold ---------- */
+  .main { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar {
+    flex: 0 0 auto;
+    display: flex; flex-direction: column;
+    padding: 16px 32px 0; border-bottom: 1px solid var(--border-soft);
+    background: var(--surface-sunken);
+  }
+  .topbar-row { display: flex; align-items: center; justify-content: space-between; min-height: 30px; }
+  .topbar-title { display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--ink-muted); }
+  .topbar-title strong { color: var(--ink); font-weight: 700; }
+  .topbar-actions { display: flex; align-items: center; gap: 8px; }
+  .ghost-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--ink-muted); font-size: 12.5px; font-weight: 500;
+    padding: 7px 12px; border-radius: 8px; cursor: pointer;
+    transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+  }
+  .ghost-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-tint); }
+  .new-chat-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--accent-tint); border: 1px solid var(--accent-tint-border);
+    color: var(--accent); font-size: 12.5px; font-weight: 600;
+    padding: 7px 12px; border-radius: 8px; cursor: pointer;
+    transition: background 0.12s ease, transform 0.08s ease;
+  }
+  .new-chat-btn:hover { background: var(--accent-tint-border); transform: translateY(-1px); }
+
+  .topbar-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-faint); padding: 10px 0 16px; }
+  .topbar-meta .meta-item { display: inline-flex; align-items: center; gap: 6px; }
+  .topbar-meta .meta-item svg { flex: 0 0 13px; opacity: 0.8; }
+  .topbar-meta .meta-sep { color: var(--border); }
+  .topbar-meta .tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--border-soft); padding: 4px 10px; border-radius: 7px; color: var(--ink-muted);
+  }
+  .topbar-meta .tag svg { flex: 0 0 12px; }
+  .add-tag-btn {
+    font-size: 12px; font-weight: 500; color: var(--ink-muted);
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 4px 10px; border-radius: 7px; cursor: default;
+    transition: border-color 0.12s ease, color 0.12s ease;
+  }
+
+  .stage { flex: 1; display: flex; min-height: 0; overflow: hidden; }
+
+  /* ---------- Landing / prompt views ---------- */
+  .landing-view { width: 100%; height: 100%; overflow-y: auto; }
+  .landing-inner {
+    width: 100%; max-width: 780px; margin: 0 auto;
+    padding: 48px 24px 64px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .cori-mark {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, var(--accent-strong), var(--accent) 70%);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 24px rgba(110,50,224,0.35);
+    margin-bottom: 20px;
+    animation: pop-in 0.5s cubic-bezier(0.2,0.8,0.2,1);
+  }
+  @keyframes pop-in { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .cori-mark svg { width: 24px; height: 24px; }
+  .kicker { font-size: 13px; color: var(--ink-muted); margin: 0 0 4px; text-align: center; }
+  .headline { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 24px; text-align: center; text-wrap: balance; }
+
+  .prompt-bar {
+    width: 100%;
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .prompt-bar.is-armed { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-tint); }
+  .prompt-bar svg.search-ic { flex: 0 0 16px; color: var(--ink-faint); }
+  .prompt-input {
+    flex: 1; border: 0; outline: 0; background: transparent;
+    font-family: inherit; font-size: 14px; color: var(--ink); caret-color: var(--accent);
+  }
+  .prompt-input::placeholder { color: var(--ink-faint); }
+  .send-btn {
+    flex: 0 0 32px; width: 32px; height: 32px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--border-soft); color: var(--ink-faint);
+    border: none; cursor: not-allowed;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  }
+  .send-btn.is-ready { background: var(--accent); color: #fff; cursor: pointer; }
+  .send-btn.is-ready:hover { background: var(--accent-strong); transform: translateY(-1px); }
+  .send-btn.is-ready:active { transform: translateY(0); }
+
+  /* ---------- AI Overview ---------- */
+  .ai-overview {
+    width: 100%; margin-top: 28px;
+    background: var(--accent-tint);
+    border: 1px solid var(--accent-tint-border);
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+  .ai-overview-head {
+    display: flex; align-items: center; justify-content: space-between;
+    font-weight: 600; font-size: 13.5px; margin-bottom: 10px;
+  }
+  .ai-overview-head .lead { display: flex; align-items: center; gap: 8px; }
+  .ai-overview ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+  .ai-overview li { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; font-size: 13px; }
+  .ai-overview li span:first-child { color: var(--ink); }
+  .ai-overview li a {
+    flex: 0 0 auto; font-weight: 600; color: var(--accent); text-decoration: none;
+    white-space: nowrap; border-bottom: 1px solid transparent;
+  }
+  .ai-overview li a:hover { border-bottom-color: currentColor; }
+  .ai-overview-foot { margin-top: 12px; font-size: 11.5px; color: var(--ink-faint); }
+
+  /* ---------- Category cards ---------- */
+  .cards-grid {
+    width: 100%; margin-top: 28px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  }
+  @media (max-width: 720px) { .cards-grid { grid-template-columns: 1fr; } }
+  .cat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px;
+    box-shadow: var(--shadow-card);
+  }
+  .cat-head { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+  .cat-icon {
+    flex: 0 0 34px; width: 34px; height: 34px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--accent-tint); color: var(--accent);
+  }
+  .cat-icon svg { width: 17px; height: 17px; }
+  .cat-title { font-weight: 600; font-size: 14.5px; margin: 0 0 2px; }
+  .cat-desc { font-size: 12px; color: var(--ink-faint); margin: 0; }
+  .chip-list { display: flex; flex-direction: column; gap: 8px; }
+  .chip {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 9px; padding: 9px 11px;
+    font-size: 12.5px; color: var(--ink);
+    cursor: default;
+    transition: border-color 0.12s ease, background 0.12s ease, transform 0.08s ease;
+  }
+  .chip svg { flex: 0 0 13px; color: var(--ink-faint); }
+  .chip.is-live { cursor: pointer; }
+  .chip.is-live:hover { border-color: var(--accent); background: var(--accent-tint); transform: translateX(1px); }
+  .chip.is-live:hover svg { color: var(--accent); }
+  .chip:not(.is-live):hover { border-color: var(--border); background: var(--surface); }
+
+  /* ---------- Chat thread ---------- */
+  .chat-view { width: 100%; height: 100%; display: flex; overflow: hidden; }
+  .chat-col { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+  .chat-scroll-wrap { flex: 1; min-height: 0; overflow-y: auto; padding: 0 32px; }
+  .chat-scroll { max-width: 760px; margin: 0 auto; width: 100%; padding: 24px 0 32px; }
+
+  .msg-user { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 22px; align-items: flex-start; }
+  .msg-user .bubble {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px 12px 2px 12px; padding: 11px 15px; font-size: 13.5px;
+    box-shadow: var(--shadow-card);
+  }
+  .msg-user .avatar { margin-top: 2px; }
+
+  .msg-cori { display: flex; gap: 12px; }
+  .cori-avatar {
+    flex: 0 0 30px; width: 30px; height: 30px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, var(--accent-strong), var(--accent) 70%);
+    display: flex; align-items: center; justify-content: center; margin-top: 2px;
+  }
+  .cori-avatar svg { width: 14px; height: 14px; color: #fff; }
+  .cori-body { flex: 1; min-width: 0; }
+
+  .steps-toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12.5px; color: var(--ink-faint); font-weight: 500;
+    background: none; border: none; padding: 0; font-family: inherit;
+    cursor: pointer; transition: color 0.12s ease;
+    margin-bottom: 22px;
+  }
+  .steps-toggle:hover { color: var(--ink-muted); }
+  .steps-toggle svg { width: 12px; height: 12px; transition: transform 0.18s ease; }
+  .steps-toggle.is-open svg { transform: rotate(90deg); }
+
+  .steps-panel {
+    display: flex; flex-direction: column; gap: 10px;
+    margin: 12px 0 14px; padding: 14px 16px;
+    background: var(--surface-sunken); border: 1px solid var(--border-soft); border-radius: 10px;
+  }
+  .step-item { display: flex; gap: 10px; align-items: flex-start; }
+  .step-num {
+    flex: 0 0 18px; width: 18px; height: 18px; border-radius: 50%;
+    background: var(--accent-tint); color: var(--accent);
+    font-size: 10.5px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+    margin-top: 1px;
+  }
+  .step-item b { display: block; font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+  .step-item p { font-size: 12.5px; color: var(--ink-muted); margin: 0; line-height: 1.5; }
+
+  .loading-row { display: flex; align-items: center; gap: 10px; color: var(--ink-muted); font-size: 13.5px; padding: 6px 0; }
+  .spinner {
+    width: 15px; height: 15px; border-radius: 50%;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .lede { font-size: 14px; line-height: 1.65; margin: 0 0 4px; }
+  .lede strong { font-weight: 700; }
+  .scope-list { margin: 10px 0 4px; padding-left: 18px; color: var(--ink-muted); font-size: 13.5px; line-height: 1.8; }
+  .scope-close { font-size: 14px; margin: 12px 0 16px; }
+
+  .resolved-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1.5px solid var(--accent);
+    color: var(--accent); font-weight: 600; font-size: 13px;
+    padding: 10px 16px; border-radius: 9px; cursor: pointer;
+    transition: background 0.12s ease, transform 0.08s ease;
+  }
+  .resolved-btn:hover { background: var(--accent-tint); transform: translateY(-1px); }
+  .resolved-btn.is-active { background: var(--accent); color: #fff; }
+
+  .section-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: var(--ink-faint);
+    text-transform: uppercase; margin: 44px 0 14px;
+  }
+
+  .finding-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px; margin-bottom: 12px;
+    box-shadow: var(--shadow-card);
+  }
+  .finding-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .finding-title { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+  .sev-dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 8px; }
+  .sev-dot.critical { background: var(--critical); }
+  .sev-dot.high { background: var(--warning); }
+  .finding-link {
+    font-size: 12px; color: var(--ink-faint); display: inline-flex; align-items: center; gap: 4px;
+    text-decoration: none; cursor: default;
+  }
+  .finding-tags { display: flex; gap: 8px; margin: 9px 0 9px; }
+  .finding-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--border-soft); color: var(--ink-muted);
+    font-size: 11px; padding: 3px 9px; border-radius: 7px;
+  }
+  .finding-desc { font-size: 13px; color: var(--ink-muted); margin: 0 0 12px; }
+  .rec-box {
+    background: var(--accent-tint); border-radius: 9px; padding: 10px 12px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+  .rec-text { font-size: 12.5px; }
+  .rec-text b { font-weight: 600; }
+  .rec-action {
+    font-size: 12px; font-weight: 600; color: var(--accent);
+    background: var(--surface); border: 1px solid var(--accent-tint-border);
+    padding: 6px 11px; border-radius: 7px; white-space: nowrap; cursor: default;
+    transition: background 0.12s ease;
+  }
+  .rec-action:hover { background: var(--accent-tint); }
+
+  .more-link { display: inline-block; font-size: 13px; font-weight: 600; color: var(--accent); text-decoration: none; margin: 4px 0 4px; cursor: default; }
+  .more-link:hover { text-decoration: underline; }
+
+  .fork-row { display: flex; gap: 10px; margin: 16px 0 10px; flex-wrap: wrap; }
+  .btn-primary, .btn-secondary {
+    font-size: 13px; font-weight: 600; padding: 10px 16px; border-radius: 9px; cursor: default;
+    transition: background 0.12s ease, transform 0.08s ease;
+  }
+  .btn-primary { background: var(--accent); color: #fff; border: none; }
+  .btn-primary:hover { background: var(--accent-strong); transform: translateY(-1px); }
+  .btn-secondary { background: var(--surface); color: var(--accent); border: 1.5px solid var(--accent); }
+  .btn-secondary:hover { background: var(--accent-tint); }
+  .btn-primary.is-live, .btn-secondary.is-live { cursor: pointer; }
+  .links-row { display: flex; gap: 20px; font-size: 12.5px; }
+  .links-row a { color: var(--accent); text-decoration: underline; cursor: default; }
+
+  /* ---------- Simulate / apply flow ---------- */
+  .simulate-card { border-color: var(--accent-tint-border); }
+  .sim-list { margin: 10px 0 16px; padding-left: 18px; color: var(--ink-muted); font-size: 13px; line-height: 1.75; }
+  .sim-list b, .sim-list em { color: var(--ink); font-style: normal; }
+  .sim-block { margin: 16px 0; }
+  .sim-block:first-of-type { margin-top: 12px; }
+  .sim-block-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 13px; margin-bottom: 9px; }
+  .sim-block-head b { font-weight: 600; }
+  .sim-block-note { font-size: 11px; color: var(--ink-faint); font-weight: 500; white-space: nowrap; font-family: "JetBrains Mono", monospace; }
+  .sim-block-desc { font-size: 12.5px; color: var(--ink-muted); margin: 9px 0 0; }
+  .sim-block .finding-tags { margin: 0; flex-wrap: wrap; }
+  .sim-block .finding-tag { font-family: "JetBrains Mono", monospace; font-size: 10.5px; }
+  .sim-block-hr { border: none; border-top: 1px solid var(--border-soft); margin: 0; }
+  .sim-block-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 11px; }
+  .sim-block-btn {
+    font-size: 12px; font-weight: 600; color: var(--accent);
+    background: var(--surface); border: 1px solid var(--accent-tint-border);
+    padding: 6px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap;
+    transition: background 0.12s ease, transform 0.08s ease, opacity 0.12s ease;
+  }
+  .sim-block-btn:hover { background: var(--accent-tint); }
+  .sim-block-btn:disabled { cursor: default; opacity: 0.6; }
+  .sim-block-link { font-size: 12px; color: var(--accent); text-decoration: underline; cursor: default; white-space: nowrap; }
+  .sim-block-status { font-size: 12px; font-weight: 600; color: var(--success); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .sim-block-status .applied-check { width: 14px; height: 14px; font-size: 9px; flex: 0 0 14px; }
+  .sim-stats-title { font-size: 12.5px; font-weight: 600; color: var(--ink-muted); margin: 18px 0 8px; }
+  .sim-stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    background: var(--surface-sunken); border: 1px solid var(--border-soft); border-radius: 10px;
+    padding: 14px 8px; margin: 0 0 18px;
+  }
+  .sim-stats > div { text-align: center; }
+  .sim-stats strong { display: block; font-size: 19px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .sim-stats span { display: block; font-size: 10.5px; color: var(--ink-faint); margin-top: 3px; line-height: 1.3; }
+  .applying-row { margin: 4px 0 4px; }
+  .applied-card { border-color: var(--success); }
+  .applied-title { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .applied-check {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%; flex: 0 0 18px;
+    background: var(--success); color: #fff; font-size: 11px; font-weight: 700;
+  }
+
+  .chat-input-dock {
+    flex: 0 0 auto;
+    background: var(--surface-sunken);
+    padding: 16px 32px 20px;
+  }
+  .chat-input-inner { max-width: 760px; margin: 0 auto; width: 100%; }
+  .followup-bar {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px;
+    box-shadow: var(--shadow-pop);
+  }
+  .followup-bar input { flex: 1; border: 0; outline: 0; background: transparent; font-family: inherit; font-size: 13px; color: var(--ink); }
+  .followup-bar input::placeholder { color: var(--ink-faint); }
+  .disclaimer { text-align: center; font-size: 11px; color: var(--ink-faint); margin-top: 10px; }
+
+  /* ---------- Table panel ---------- */
+  .table-panel {
+    width: 0; flex: 0 0 0; overflow: hidden;
+    background: transparent;
+    padding: 12px 16px 20px 0;
+    box-sizing: border-box;
+    position: relative; z-index: 15;
+    transition: flex-basis 0.32s cubic-bezier(0.2,0.8,0.2,1), width 0.32s cubic-bezier(0.2,0.8,0.2,1);
+  }
+  .table-panel.is-open { width: 656px; flex: 0 0 656px; }
+  .table-inner {
+    width: 100%; height: 100%; display: flex; flex-direction: column; padding: 20px 24px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    box-shadow: var(--shadow-pop); box-sizing: border-box;
+  }
+  .table-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .table-head h3 { font-size: 15px; margin: 0; }
+  .icon-btn {
+    width: 28px; height: 28px; border-radius: 7px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--ink-muted); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.12s ease, color 0.12s ease;
+  }
+  .icon-btn:hover { background: var(--border-soft); color: var(--ink); }
+
+  .panel-tabs { display: flex; gap: 4px; padding: 3px; background: var(--border-soft); border-radius: 9px; margin-bottom: 16px; flex: 0 0 auto; }
+  .panel-tab {
+    flex: 1; font-size: 12px; font-weight: 600; color: var(--ink-muted);
+    background: transparent; border: none; border-radius: 7px; padding: 8px 6px;
+    cursor: pointer; transition: background 0.12s ease, color 0.12s ease;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .panel-tab:hover { color: var(--ink); }
+  .panel-tab.is-active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-card); }
+  .panel-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .table-scroll { flex: 1; min-height: 0; overflow: auto; }
+  .panel-lede { font-size: 13px; color: var(--ink-muted); line-height: 1.6; margin: 0 0 14px; }
+  .panel-lede strong { color: var(--ink); font-weight: 700; }
+
+  table.agents { width: 100%; border-collapse: collapse; font-size: 12.5px; table-layout: fixed; }
+  table.agents th {
+    text-align: left; font-weight: 600; color: var(--ink-faint); font-size: 10.5px;
+    letter-spacing: 0.04em; text-transform: uppercase; padding: 0 8px 10px; border-bottom: 1px solid var(--border);
+  }
+  table.agents td { padding: 10px 8px; border-bottom: 1px solid var(--border-soft); vertical-align: top; }
+  table.agents tr:hover td { background: var(--surface-sunken); }
+  .agent-cell { display: flex; align-items: center; gap: 9px; }
+  .agent-avatar {
+    width: 26px; height: 26px; border-radius: 50%; flex: 0 0 26px;
+    background: var(--accent-tint); color: var(--accent);
+    display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 700;
+  }
+  .agent-name { font-weight: 600; }
+  .agent-owner { color: var(--ink-faint); font-size: 11.5px; }
+  .risk-pill {
+    display: inline-block; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 6px;
+    background: var(--critical-tint); color: var(--critical);
+  }
+  .status-dot { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ink-muted); }
+  .status-dot::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+  .table-foot { margin-top: 12px; font-size: 12.5px; color: var(--accent); font-weight: 600; cursor: default; }
+  .table-foot span { color: var(--ink-faint); font-weight: 400; }
+
+  /* ---------- utility ---------- */
+  .hidden { display: none !important; }
+  .fade-in { animation: fade-in 0.28s ease both; }
+  @keyframes fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+        <circle cx="12" cy="12" r="9.2"/>
+        <path d="M8.8 16V9" stroke-linecap="round"/>
+        <path d="M8.8 10.4c.7-1.1 2.1-1.7 3.4-1.7 1.9 0 3.4 1.1 3.4 3V16" stroke-linecap="round"/>
+      </svg>
+      <div class="brand-name"><span class="bn-light">new</span><span class="bn-bold">core</span></div>
+    </div>
+
+    <a class="nav-item is-active" data-nav="cori">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l1.8 5.6L19 10l-5.2 1.4L12 17l-1.8-5.6L5 10l5.2-1.4L12 3z"/></svg>
+      Ask Cori
+    </a>
+    <a class="nav-item" data-nav>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      Dashboard
+    </a>
+
+    <div class="nav-group">
+      <div class="nav-label">Inventory</div>
+      <a class="nav-item" data-nav><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="18" cy="9" r="2.4"/><path d="M15.5 14.2c2.4.4 4.5 2.4 4.5 5.3"/></svg>Users</a>
+      <a class="nav-item" data-nav><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="7" width="16" height="12" rx="2.5"/><path d="M9 7V5.5A2.5 2.5 0 0 1 11.5 3h1A2.5 2.5 0 0 1 15 5.5V7"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/></svg>Agents</a>
+      <a class="nav-item" data-nav><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg>Applications</a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Triage</div>
+      <a class="nav-item" data-nav><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h9l3 3v15H6z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>Policies</a>
+      <a class="nav-item" data-nav><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg>Findings</a>
+      <a class="nav-item" data-nav><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4"/><path d="M9.5 13.5l2 2 3.5-4"/></svg>Access review</a>
+    </div>
+
+    <div class="nav-spacer"></div>
+
+    <a class="nav-item" data-nav><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</a>
+    <a class="nav-item" data-nav><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.5 2.5 0 1 1 3.7 2.2c-.9.5-1.2 1-1.2 2"/><circle cx="12" cy="16.5" r="0.5" fill="currentColor"/></svg>Get help</a>
+    <div class="sidebar-foot">
+      <div class="user-row">
+        <div class="avatar">S</div>
+        <div class="user-meta">
+          <div class="user-name">Sarah Cohen</div>
+          <div class="user-env">Acme</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-row">
+        <div class="topbar-title" id="topbarTitle"></div>
+        <div class="topbar-actions">
+          <button class="ghost-btn" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+            See history
+          </button>
+          <button class="new-chat-btn hidden" id="newChatBtn" type="button">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+            New chat
+          </button>
+        </div>
+      </div>
+
+      <div class="topbar-meta hidden" id="topbarMeta">
+        <span class="meta-item">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+          <span id="chatTimestamp">Aug 25, 2026 at 9:14 AM</span>
+        </span>
+        <span class="meta-sep">|</span>
+        <span class="meta-item">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.6 3-6.5 7-6.5s7 2.9 7 6.5"/></svg>
+          sarah.cohen@acme.com
+        </span>
+        <span class="tag">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="7" width="16" height="12" rx="2.5"/><path d="M9 7V5.5A2.5 2.5 0 0 1 11.5 3h1A2.5 2.5 0 0 1 15 5.5V7"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/></svg>
+          Agents
+        </span>
+        <span class="tag">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg>
+          Findings
+        </span>
+        <span class="tag">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4"/><path d="M9.5 13.5l2 2 3.5-4"/></svg>
+          Access Review
+        </span>
+        <button class="add-tag-btn" type="button">Add Tag</button>
+      </div>
+    </div>
+
+    <div class="stage">
+      <!-- ===== LANDING / PROMPT VIEW ===== -->
+      <section class="landing-view" id="viewLanding">
+        <div class="landing-inner">
+        <div class="cori-mark">
+          <svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2l2.2 6.8L21 11l-6.8 2.2L12 20l-2.2-6.8L3 11l6.8-2.2L12 2z"/></svg>
+        </div>
+        <p class="kicker">Cori is your agentic identity assistant</p>
+        <h1 class="headline" id="landingHeadline">What can I help you review today?</h1>
+
+        <div class="prompt-bar" id="promptBar">
+          <svg class="search-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input class="prompt-input" id="promptInput" type="text" placeholder="Describe a security challenge or pick one from below" readonly>
+          <button class="send-btn" id="sendBtn" type="button" aria-label="Send" disabled>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+
+        <div class="ai-overview">
+          <div class="ai-overview-head">
+            <span class="lead">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color:var(--accent)"><path d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8L12 2z"/></svg>
+              AI Overview
+            </span>
+          </div>
+          <ul>
+            <li><span>Owners of 3 agents were deactivated over 30 days ago — their credentials are still active.</span><a href="javascript:void(0)">Check Agents</a></li>
+            <li><span>12 agents authenticate with a password only — no passkey or authenticator app on file.</span><a href="javascript:void(0)">Check Agents</a></li>
+            <li><span>Of 180 apps, 135 are discovered — never approved, and none pass through a NewCore policy.</span><a href="javascript:void(0)">Check Apps</a></li>
+          </ul>
+          <div class="ai-overview-foot">Cori can make mistakes.</div>
+        </div>
+
+        <div class="cards-grid">
+          <article class="cat-card">
+            <div class="cat-head">
+              <div class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 3v6c0 4.6-3 8-7 9-4-1-7-4.4-7-9V6l7-3z"/></svg></div>
+              <div><p class="cat-title">Act</p><p class="cat-desc">Kicks off any action — harden, revoke, rotate</p></div>
+            </div>
+            <div class="chip-list">
+              <div class="chip is-live" data-prompt="Harden the access of my marketing agents">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2.1l4 4-4 4M3 12.1a9 9 0 0 1 15-6.7M7 21.9l-4-4 4-4M21 11.9a9 9 0 0 1-15 6.7"/></svg>
+                Harden the access of my marketing agents
+              </div>
+              <div class="chip">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2.1l4 4-4 4M3 12.1a9 9 0 0 1 15-6.7M7 21.9l-4-4 4-4M21 11.9a9 9 0 0 1-15 6.7"/></svg>
+                Revoke agent access after offboarding
+              </div>
+              <div class="chip">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2.1l4 4-4 4M3 12.1a9 9 0 0 1 15-6.7M7 21.9l-4-4 4-4M21 11.9a9 9 0 0 1-15 6.7"/></svg>
+                Require passkey for password-only agents
+              </div>
+            </div>
+          </article>
+
+          <article class="cat-card">
+            <div class="cat-head">
+              <div class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+              <div><p class="cat-title">Investigate</p><p class="cat-desc">Ask any access question</p></div>
+            </div>
+            <div class="chip-list">
+              <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2.1l4 4-4 4M3 12.1a9 9 0 0 1 15-6.7M7 21.9l-4-4 4-4M21 11.9a9 9 0 0 1-15 6.7"/></svg>Which agents can write to Salesforce?</div>
+              <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2.1l4 4-4 4M3 12.1a9 9 0 0 1 15-6.7M7 21.9l-4-4 4-4M21 11.9a9 9 0 0 1-15 6.7"/></svg>Agents with no owner on record</div>
+              <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2.1l4 4-4 4M3 12.1a9 9 0 0 1 15-6.7M7 21.9l-4-4 4-4M21 11.9a9 9 0 0 1-15 6.7"/></svg>Who reaches GitHub via a discovered app?</div>
+            </div>
+          </article>
+
+          <article class="cat-card">
+            <div class="cat-head">
+              <div class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4"/><path d="M9.5 13.5l2 2 3.5-4"/></svg></div>
+              <div><p class="cat-title">Reviews &amp; Reporting</p><p class="cat-desc">See every review, in progress or applied</p></div>
+            </div>
+            <div class="chip-list">
+              <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2.1l4 4-4 4M3 12.1a9 9 0 0 1 15-6.7M7 21.9l-4-4 4-4M21 11.9a9 9 0 0 1-15 6.7"/></svg>Reviews in progress</div>
+              <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2.1l4 4-4 4M3 12.1a9 9 0 0 1 15-6.7M7 21.9l-4-4 4-4M21 11.9a9 9 0 0 1-15 6.7"/></svg>What NewCore applied this week</div>
+              <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2.1l4 4-4 4M3 12.1a9 9 0 0 1 15-6.7M7 21.9l-4-4 4-4M21 11.9a9 9 0 0 1-15 6.7"/></svg>Alerts I haven't reviewed yet</div>
+            </div>
+          </article>
+
+          <article class="cat-card">
+            <div class="cat-head">
+              <div class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.5 2.5 0 1 1 3.7 2.2c-.9.5-1.2 1-1.2 2"/><circle cx="12" cy="16.5" r="0.5" fill="currentColor"/></svg></div>
+              <div><p class="cat-title">Support</p><p class="cat-desc">Get help using Cori</p></div>
+            </div>
+            <div class="chip-list">
+              <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2.1l4 4-4 4M3 12.1a9 9 0 0 1 15-6.7M7 21.9l-4-4 4-4M21 11.9a9 9 0 0 1-15 6.7"/></svg>Raise a group's auth requirement</div>
+              <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2.1l4 4-4 4M3 12.1a9 9 0 0 1 15-6.7M7 21.9l-4-4 4-4M21 11.9a9 9 0 0 1-15 6.7"/></svg>What does "discovered" mean?</div>
+              <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2.1l4 4-4 4M3 12.1a9 9 0 0 1 15-6.7M7 21.9l-4-4 4-4M21 11.9a9 9 0 0 1-15 6.7"/></svg>Read a policy's weakest path</div>
+            </div>
+          </article>
+        </div>
+        </div>
+      </section>
+
+      <!-- ===== CHAT / RESPONSE VIEW ===== -->
+      <section class="chat-view hidden" id="viewChat">
+        <div class="chat-col">
+          <div class="chat-scroll-wrap">
+          <div class="chat-scroll">
+            <div class="msg-user">
+              <div class="bubble">I want to harden the access of my marketing agents</div>
+              <div class="avatar">S</div>
+            </div>
+
+            <div class="msg-cori">
+              <div class="cori-avatar">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8L12 2z"/></svg>
+              </div>
+              <div class="cori-body">
+                <!-- loading -->
+                <div id="loadingRow" class="loading-row hidden">
+                  <div class="spinner"></div>
+                  Analyzing…
+                </div>
+
+                <!-- response -->
+                <div id="responseBody" class="hidden">
+                  <button class="steps-toggle" id="stepsToggle" type="button" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+                    Completed 3 steps
+                  </button>
+
+                  <div class="steps-panel hidden" id="stepsPanel">
+                    <div class="step-item">
+                      <span class="step-num">1</span>
+                      <div><b>Resolved scope</b><p>Found 14 agents matching "marketing agents" — 9 via owner's department, 8 via a Marketing-scoped group, 3 overlap.</p></div>
+                    </div>
+                    <div class="step-item">
+                      <span class="step-num">2</span>
+                      <div><b>Assessed findings</b><p>5 findings across the 14 agents, ranked worst-first — 2 critical.</p></div>
+                    </div>
+                    <div class="step-item">
+                      <span class="step-num">3</span>
+                      <div><b>Proposed remediation</b><p>9 changes across 3 levers, ready to apply now or review yourself first.</p></div>
+                    </div>
+                  </div>
+
+                  <div class="section-label" style="margin-top:0;">Scope</div>
+                  <p class="lede">Found <strong>14 agents</strong> matching "marketing agents":</p>
+                  <ul class="scope-list">
+                    <li>9 via owner's department</li>
+                    <li>8 via a Marketing-scoped group</li>
+                    <li>3 overlap</li>
+                    <li>3 agents excluded (no owner on record), reviewed separately</li>
+                  </ul>
+                  <p class="scope-close">Here's the resolved list, ready for your review.</p>
+
+                  <button class="resolved-btn" id="resolvedBtn" type="button">
+                    14 "Marketing agents"
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                  </button>
+
+                  <div class="section-label">Assess</div>
+                  <p class="lede" style="margin-bottom:14px;">5 findings across the 14 agents, ranked worst-first — 2 critical:</p>
+
+                  <div class="finding-card">
+                    <div class="finding-head">
+                      <div class="finding-title"><span class="sev-dot critical"></span>Sign-in policy</div>
+                      <a class="finding-link">Review Finding ↗</a>
+                    </div>
+                    <div class="finding-tags"><span class="finding-tag">14 Agents</span><span class="finding-tag">Finding</span></div>
+                    <p class="finding-desc">Weakest auth path is a password — no passkey or authenticator on file, including legacy-crm-sync and overrides-audit-bot.</p>
+                    <div class="rec-box">
+                      <div class="rec-text"><b>Recommended:</b> Require passkey or authenticator app.</div>
+                      <div class="rec-action">Open Review</div>
+                    </div>
+                  </div>
+
+                  <div class="finding-card">
+                    <div class="finding-head">
+                      <div class="finding-title"><span class="sev-dot critical"></span>No owner on record</div>
+                      <a class="finding-link">Review Finding ↗</a>
+                    </div>
+                    <div class="finding-tags"><span class="finding-tag">2 Agents</span><span class="finding-tag">Finding</span></div>
+                    <p class="finding-desc">Owner deactivated 34+ days ago; credentials are still active.</p>
+                    <div class="rec-box">
+                      <div class="rec-text"><b>Recommended:</b> Deactivate immediately.</div>
+                      <div class="rec-action">Deactivate agents</div>
+                    </div>
+                  </div>
+
+                  <div class="finding-card">
+                    <div class="finding-head">
+                      <div class="finding-title"><span class="sev-dot high"></span>Forbidden apps without policy</div>
+                      <a class="finding-link">Review Finding ↗</a>
+                    </div>
+                    <div class="finding-tags"><span class="finding-tag">4 Agents</span><span class="finding-tag">Finding</span></div>
+                    <p class="finding-desc">Never-approved apps with no NewCore policy anywhere in the path.</p>
+                    <div class="rec-box">
+                      <div class="rec-text"><b>Recommended:</b> Route through policy or revoke access.</div>
+                      <div class="rec-action">Revoke access</div>
+                    </div>
+                  </div>
+
+                  <a class="more-link">2 more findings — view all 5 in Findings →</a>
+
+                  <div class="section-label">Propose</div>
+                  <p class="lede">9 changes across 3 levers — tool permissions tightened for 2 tools, authentication policy raised for all 14 agents, and 3 individual overrides flagged for your review (not auto-changed).</p>
+                  <p class="lede" style="margin-top:14px;">Want me to apply all 9 changes now, or review everything yourself first?</p>
+
+                  <div id="proposeActions">
+                    <div class="fork-row">
+                      <button class="btn-primary is-live" id="applyBtn" type="button">Apply all 9 changes now</button>
+                      <button class="btn-secondary" type="button">Review in Access Review</button>
+                    </div>
+                    <div class="links-row">
+                      <a>View all 5 findings in Findings →</a>
+                      <a>Open as Access Review →</a>
+                    </div>
+                  </div>
+
+                  <div class="finding-card simulate-card hidden" id="simulateCard">
+                    <div class="section-label" style="margin-top:0;">Simulate</div>
+                    <p class="lede">Before anything changes, here's exactly what's touched:</p>
+
+                    <div class="sim-block">
+                      <div class="sim-block-head"><b>Tool permissions</b><span class="sim-block-note">ask → deny</span></div>
+                      <div class="finding-tags">
+                        <span class="finding-tag">salesforce.bulk_export</span>
+                        <span class="finding-tag">google_workspace.send_as</span>
+                      </div>
+                      <p class="sim-block-desc">Used only by these 14 agents — no agent outside this segment is affected.</p>
+                      <div class="sim-block-actions">
+                        <button class="sim-block-btn" id="applyToolsOnly" type="button">Apply just this</button>
+                        <a class="sim-block-link">View in Findings →</a>
+                      </div>
+                    </div>
+                    <hr class="sim-block-hr">
+
+                    <div class="sim-block">
+                      <div class="sim-block-head"><b>Sign-in policy</b><span class="sim-block-note">forked, not edited</span></div>
+                      <div class="finding-tags">
+                        <span class="finding-tag">Marketing Agents · Sign-in policy</span>
+                      </div>
+                      <p class="sim-block-desc">Forked from your org-default Sign-in policy, requiring passkey or authenticator app. 14 agents affected, 0 outside this segment.</p>
+                      <div class="sim-block-actions">
+                        <button class="sim-block-btn" id="applyPolicyOnly" type="button">Apply just this</button>
+                        <a class="sim-block-link">View in Access Review →</a>
+                      </div>
+                    </div>
+                    <hr class="sim-block-hr">
+
+                    <div class="sim-block">
+                      <div class="sim-block-head"><b>Individual overrides</b><span class="sim-block-note">flagged, not changed</span></div>
+                      <div class="finding-tags">
+                        <span class="finding-tag">legacy-crm-sync</span>
+                        <span class="finding-tag">overrides-audit-bot</span>
+                        <span class="finding-tag">email-blast-bot</span>
+                      </div>
+                      <p class="sim-block-desc">Exceed the new baseline — yours to decide, nothing changes automatically.</p>
+                      <div class="sim-block-actions" style="justify-content:flex-end;">
+                        <a class="sim-block-link">Review in Access Review →</a>
+                      </div>
+                    </div>
+
+                    <p class="sim-stats-title">Results summary</p>
+                    <div class="sim-stats">
+                      <div><strong>6</strong><span>changes apply now</span></div>
+                      <div><strong>1</strong><span>new scoped policy</span></div>
+                      <div><strong>0</strong><span>agents outside segment</span></div>
+                      <div><strong>3</strong><span>overrides await you</span></div>
+                    </div>
+                    <div class="fork-row">
+                      <button class="btn-primary is-live" id="confirmApplyBtn" type="button">Confirm and apply</button>
+                      <button class="btn-secondary is-live" id="cancelApplyBtn" type="button">Cancel</button>
+                    </div>
+                  </div>
+
+                  <div class="loading-row applying-row hidden" id="applyingRow">
+                    <div class="spinner"></div>
+                    Applying 6 changes…
+                  </div>
+
+                  <div class="finding-card applied-card hidden" id="appliedCard">
+                    <div class="applied-title"><span class="applied-check">✓</span>Applied — 6 of 9 changes are live.</div>
+                    <ul class="sim-list">
+                      <li><code style="font-family:'JetBrains Mono',monospace;font-size:12px;">salesforce.bulk_export</code> and <code style="font-family:'JetBrains Mono',monospace;font-size:12px;">google_workspace.send_as</code> tightened from ask → deny, across all 14 agents.</li>
+                      <li>"Marketing Agents · Sign-in policy" forked and applied — your org-wide Sign-in policy wasn't touched.</li>
+                      <li><b>legacy-crm-sync</b>, <b>overrides-audit-bot</b>, and <b>email-blast-bot</b> flagged for your review — nothing was silently changed.</li>
+                    </ul>
+                    <div class="links-row" style="margin-top:4px;">
+                      <a>View in Access Review →</a>
+                      <a>Review the 3 flagged overrides →</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          </div>
+
+          <div class="chat-input-dock">
+            <div class="chat-input-inner">
+              <div class="followup-bar">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                <input type="text" placeholder="Ask a follow-up">
+              </div>
+              <p class="disclaimer">Cori can make mistakes. Consider checking important information.</p>
+            </div>
+          </div>
+        </div>
+
+        <aside class="table-panel" id="tablePanel">
+          <div class="table-inner">
+            <div class="table-head">
+              <h3>14 "Marketing agents"</h3>
+              <button class="icon-btn" id="closeTable" type="button" aria-label="Close">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+              </button>
+            </div>
+
+            <div class="panel-tabs" role="tablist">
+              <button class="panel-tab is-active" data-tab="list" type="button">List</button>
+              <button class="panel-tab" data-tab="assess" type="button">Assess</button>
+              <button class="panel-tab" data-tab="propose" type="button">Propose</button>
+            </div>
+
+            <div class="panel-body" id="panelList">
+              <div class="table-scroll">
+                <table class="agents">
+                  <thead>
+                    <tr><th style="width:34%">Agent</th><th style="width:18%">Signal</th><th style="width:16%">Risk</th><th style="width:16%">Tools</th><th style="width:16%">Active</th></tr>
+                  </thead>
+                  <tbody id="agentsBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="panel-body hidden" id="panelAssess">
+              <div class="table-scroll">
+                <p class="panel-lede"><strong>5 findings</strong> across the 14 agents, ranked worst-first — 2 critical:</p>
+
+                <div class="finding-card">
+                  <div class="finding-head">
+                    <div class="finding-title"><span class="sev-dot critical"></span>Sign-in policy</div>
+                    <a class="finding-link">Review Finding ↗</a>
+                  </div>
+                  <div class="finding-tags"><span class="finding-tag">14 Agents</span><span class="finding-tag">Finding</span></div>
+                  <p class="finding-desc">Weakest auth path is a password — no passkey or authenticator on file, including legacy-crm-sync and overrides-audit-bot.</p>
+                  <div class="rec-box">
+                    <div class="rec-text"><b>Recommended:</b> Require passkey or authenticator app.</div>
+                  </div>
+                </div>
+
+                <div class="finding-card">
+                  <div class="finding-head">
+                    <div class="finding-title"><span class="sev-dot critical"></span>No owner on record</div>
+                    <a class="finding-link">Review Finding ↗</a>
+                  </div>
+                  <div class="finding-tags"><span class="finding-tag">2 Agents</span><span class="finding-tag">Finding</span></div>
+                  <p class="finding-desc">Owner deactivated 34+ days ago; credentials are still active.</p>
+                  <div class="rec-box">
+                    <div class="rec-text"><b>Recommended:</b> Deactivate immediately.</div>
+                  </div>
+                </div>
+
+                <div class="finding-card">
+                  <div class="finding-head">
+                    <div class="finding-title"><span class="sev-dot high"></span>Forbidden apps without policy</div>
+                    <a class="finding-link">Review Finding ↗</a>
+                  </div>
+                  <div class="finding-tags"><span class="finding-tag">4 Agents</span><span class="finding-tag">Finding</span></div>
+                  <p class="finding-desc">Never-approved apps with no NewCore policy anywhere in the path.</p>
+                  <div class="rec-box">
+                    <div class="rec-text"><b>Recommended:</b> Route through policy or revoke access.</div>
+                  </div>
+                </div>
+
+                <a class="more-link">2 more findings — view all 5 in Findings →</a>
+              </div>
+            </div>
+
+            <div class="panel-body hidden" id="panelPropose">
+              <div class="table-scroll">
+                <p class="panel-lede"><strong>9 changes</strong> across 3 levers — tool permissions tightened, authentication policy raised, individual overrides flagged for your review.</p>
+
+                <div class="sim-block" style="margin-top:0;">
+                  <div class="sim-block-head"><b>Tool permissions</b><span class="sim-block-note">ask → deny</span></div>
+                  <div class="finding-tags">
+                    <span class="finding-tag">salesforce.bulk_export</span>
+                    <span class="finding-tag">google_workspace.send_as</span>
+                  </div>
+                  <p class="sim-block-desc">Used only by these 14 agents — no agent outside this segment is affected.</p>
+                </div>
+                <hr class="sim-block-hr">
+
+                <div class="sim-block">
+                  <div class="sim-block-head"><b>Sign-in policy</b><span class="sim-block-note">forked, not edited</span></div>
+                  <div class="finding-tags">
+                    <span class="finding-tag">Marketing Agents · Sign-in policy</span>
+                  </div>
+                  <p class="sim-block-desc">Forked from your org-default Sign-in policy. 14 agents affected, 0 outside this segment.</p>
+                </div>
+                <hr class="sim-block-hr">
+
+                <div class="sim-block">
+                  <div class="sim-block-head"><b>Individual overrides</b><span class="sim-block-note">flagged, not changed</span></div>
+                  <div class="finding-tags">
+                    <span class="finding-tag">legacy-crm-sync</span>
+                    <span class="finding-tag">overrides-audit-bot</span>
+                    <span class="finding-tag">email-blast-bot</span>
+                  </div>
+                  <p class="sim-block-desc">Exceed the new baseline — yours to decide, nothing changes automatically.</p>
+                </div>
+
+                <p class="panel-lede" style="margin-top:16px;">Simulate and apply from the chat thread — this tab mirrors what Cori is proposing.</p>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  var AGENTS = [
+    { i: "CB", n: "campaign-brief-bot", o: "Dana Lee", sig: "Dept" },
+    { i: "SC", n: "seo-content-agent", o: "Dana Lee", sig: "Dept" },
+    { i: "SS", n: "social-scheduler", o: "Priya Shah", sig: "Dept" },
+    { i: "BA", n: "brand-asset-sync", o: "Priya Shah", sig: "Dept" },
+    { i: "LR", n: "lead-router-agent", o: "Marcus Webb", sig: "Group" },
+    { i: "ES", n: "event-signup-bot", o: "Dana Lee", sig: "Both" },
+    { i: "LC", n: "legacy-crm-sync", o: "Priya Shah", sig: "Dept" },
+    { i: "OA", n: "overrides-audit-bot", o: "Marcus Webb", sig: "Group" },
+    { i: "EB", n: "email-blast-bot", o: "Dana Lee", sig: "Dept" },
+    { i: "NS", n: "newsletter-scheduler", o: "Dana Lee", sig: "Dept" },
+    { i: "AC", n: "ad-copy-generator", o: "Priya Shah", sig: "Dept" },
+    { i: "IO", n: "influencer-outreach-bot", o: "Priya Shah", sig: "Group" },
+    { i: "CR", n: "content-repurpose-agent", o: "Dana Lee", sig: "Dept" },
+    { i: "WS", n: "webinar-signup-agent", o: "Marcus Webb", sig: "Group" }
+  ];
+  var tbody = document.getElementById("agentsBody");
+  AGENTS.forEach(function (a) {
+    var tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td><div class="agent-cell"><div class="agent-avatar">' + a.i + '</div>' +
+      '<div><div class="agent-name">' + a.n + '</div><div class="agent-owner">Owner: ' + a.o + '</div></div></div></td>' +
+      '<td>' + a.sig + '</td>' +
+      '<td><span class="risk-pill">Critical</span></td>' +
+      '<td>' + (2 + (a.n.length % 3)) + '</td>' +
+      '<td><span class="status-dot">Active</span></td>';
+    tbody.appendChild(tr);
+  });
+
+  var landing = document.getElementById("viewLanding");
+  var chat = document.getElementById("viewChat");
+  var promptBar = document.getElementById("promptBar");
+  var promptInput = document.getElementById("promptInput");
+  var sendBtn = document.getElementById("sendBtn");
+  var loadingRow = document.getElementById("loadingRow");
+  var responseBody = document.getElementById("responseBody");
+  var resolvedBtn = document.getElementById("resolvedBtn");
+  var tablePanel = document.getElementById("tablePanel");
+  var closeTable = document.getElementById("closeTable");
+  var topbarTitle = document.getElementById("topbarTitle");
+  var topbarMeta = document.getElementById("topbarMeta");
+  var newChatBtn = document.getElementById("newChatBtn");
+
+  var PROMPT = "Harden the access of my marketing agents";
+  var typed = false;
+
+  function armPrompt() {
+    if (typed) return;
+    typed = true;
+    promptInput.value = PROMPT;
+    promptBar.classList.add("is-armed");
+    sendBtn.classList.add("is-ready");
+    sendBtn.disabled = false;
+  }
+
+  document.querySelectorAll('.chip[data-prompt]').forEach(function (chip) {
+    chip.addEventListener("click", function () {
+      armPrompt();
+      promptInput.focus();
+    });
+  });
+
+  function send() {
+    if (!typed) return;
+    landing.classList.add("hidden");
+    chat.classList.remove("hidden");
+    chat.classList.add("fade-in");
+    topbarTitle.innerHTML = "<strong>Harden the access of the marketing agents</strong>";
+    newChatBtn.classList.remove("hidden");
+    topbarMeta.classList.remove("hidden");
+    loadingRow.classList.remove("hidden");
+    responseBody.classList.add("hidden");
+
+    var d = new Date();
+    var opts = { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" };
+    document.getElementById("chatTimestamp").textContent = d.toLocaleString("en-US", opts).replace(",", " at");
+
+    window.setTimeout(function () {
+      loadingRow.classList.add("hidden");
+      responseBody.classList.remove("hidden");
+      responseBody.classList.add("fade-in");
+    }, 1300);
+  }
+
+  sendBtn.addEventListener("click", send);
+  promptInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") send();
+  });
+
+  newChatBtn.addEventListener("click", function () {
+    chat.classList.add("hidden");
+    landing.classList.remove("hidden");
+    landing.classList.add("fade-in");
+    tablePanel.classList.remove("is-open");
+    resolvedBtn.classList.remove("is-active");
+    topbarTitle.innerHTML = "";
+    newChatBtn.classList.add("hidden");
+    topbarMeta.classList.add("hidden");
+    typed = false;
+    promptInput.value = "";
+    promptBar.classList.remove("is-armed");
+    sendBtn.classList.remove("is-ready");
+    sendBtn.disabled = true;
+  });
+
+  var stepsToggle = document.getElementById("stepsToggle");
+  var stepsPanel = document.getElementById("stepsPanel");
+  stepsToggle.addEventListener("click", function () {
+    var open = stepsPanel.classList.toggle("hidden") === false;
+    stepsToggle.classList.toggle("is-open", open);
+    stepsToggle.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+
+  resolvedBtn.addEventListener("click", function () {
+    var open = tablePanel.classList.toggle("is-open");
+    resolvedBtn.classList.toggle("is-active", open);
+  });
+  closeTable.addEventListener("click", function () {
+    tablePanel.classList.remove("is-open");
+    resolvedBtn.classList.remove("is-active");
+  });
+
+  var proposeActions = document.getElementById("proposeActions");
+  var simulateCard = document.getElementById("simulateCard");
+  var applyingRow = document.getElementById("applyingRow");
+  var appliedCard = document.getElementById("appliedCard");
+  var applyBtn = document.getElementById("applyBtn");
+  var confirmApplyBtn = document.getElementById("confirmApplyBtn");
+  var cancelApplyBtn = document.getElementById("cancelApplyBtn");
+
+  applyBtn.addEventListener("click", function () {
+    proposeActions.classList.add("hidden");
+    simulateCard.classList.remove("hidden");
+    simulateCard.classList.add("fade-in");
+  });
+
+  cancelApplyBtn.addEventListener("click", function () {
+    simulateCard.classList.add("hidden");
+    proposeActions.classList.remove("hidden");
+    proposeActions.classList.add("fade-in");
+  });
+
+  confirmApplyBtn.addEventListener("click", function () {
+    simulateCard.classList.add("hidden");
+    applyingRow.classList.remove("hidden");
+
+    window.setTimeout(function () {
+      applyingRow.classList.add("hidden");
+      appliedCard.classList.remove("hidden");
+      appliedCard.classList.add("fade-in");
+    }, 1300);
+  });
+
+  function wireBlockApply(btnId, doneLabel) {
+    var btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      btn.disabled = true;
+      btn.textContent = "Applying…";
+      window.setTimeout(function () {
+        var status = document.createElement("span");
+        status.className = "sim-block-status fade-in";
+        status.innerHTML = '<span class="applied-check">✓</span>' + doneLabel;
+        btn.replaceWith(status);
+      }, 700);
+    });
+  }
+  wireBlockApply("applyToolsOnly", "Applied");
+  wireBlockApply("applyPolicyOnly", "Applied");
+
+  var panelTabs = document.querySelectorAll(".panel-tab");
+  var panelBodies = {
+    list: document.getElementById("panelList"),
+    assess: document.getElementById("panelAssess"),
+    propose: document.getElementById("panelPropose")
+  };
+  panelTabs.forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      panelTabs.forEach(function (t) { t.classList.remove("is-active"); });
+      tab.classList.add("is-active");
+      Object.keys(panelBodies).forEach(function (key) {
+        panelBodies[key].classList.toggle("hidden", key !== tab.dataset.tab);
+      });
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
